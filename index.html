@@ -1,11 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <link href="index.css">
-    <title>Visualiseur Audio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <title>Visualiseur Audio 3D</title>
 </head>
 <body>
+    <div id="overlay">
+        <div class="controls">
+            <h1>Visualiseur Audio 3D</h1>
+            <input type="file" id="audioFile" accept="audio/*" />
+            <button id="startButton">Démarrer</button>
+            <button id="pauseButton" style="display:none;">Pause</button>
+        </div>
+    </div>
+    <div id="container"></div>
+    <div id="info">
+        <p>Chargez un fichier audio et démarrez le visualiseur</p>
+    </div>
     <script type="module" src="index.js"></script>
 </body>
 </html>
