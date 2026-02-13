@@ -1,47 +1,107 @@
 import * as THREE from 'three';
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+let scene, camera, renderer, clock, analyser;
+let data = 0;
+// const speed = 2.5;
+// const height = 3;
+// const offset = 0.5;
+let i = 1;
 
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize( window.innerWidth, window.innerHeight );
-renderer.setAnimationLoop( animate );
-document.body.appendChild( renderer.domElement );
-const ambientLight = new THREE.AmbientLight( 0x00ff00 );
-scene.add( ambientLight );
-camera.position.z = 5;
+const frequencyRange = {
+    bass: [20, 140],
+    lowMid: [140, 400],
+    mid: [400, 2600],
+    highMid: [2600, 5200],
+    treble: [5200, 14000],
+};
 
-// audio
+let objectBall = [];
+const startButton = document.getElementById('startButton');
+startButton.addEventListener('click', init)
 
-const audioLoader = new THREE.AudioLoader();
+function init() {
+    const overlay = document.getElementById('overlay');
+    overlay.remove();
 
-const listener = new THREE.AudioListener();
-camera.add( listener );
+    scene = new THREE.Scene();
+    clock = new THREE.Clock();
 
-// floor
-
-const floorGeometry = new THREE.PlaneGeometry( 10, 10 );
-const floorMaterial = new THREE.MeshLambertMaterial( { color: 0x4676b6 } );
-
-const floor = new THREE.Mesh( floorGeometry, floorMaterial );
-floor.rotation.x = Math.PI * - 0.5;
-floor.receiveShadow = true;
-scene.add( floor );
-
-const ballGeometry = new THREE.SphereGeometry( 0.3, 32, 16 );
-const ballMaterial = new THREE.MeshLambertMaterial( { color: 0xcccccc } );
-const ball = new THREE.Mesh( ballGeometry, ballMaterial );
-scene.add( ball );
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
 
 
-const clock = new THREE.Clock();
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setAnimationLoop(animate);
+    document.body.appendChild(renderer.domElement);
+
+    const ambientLight = new THREE.AmbientLight(0x00ff00);
+    scene.add(ambientLight);
+
+
+    const listener = new THREE.AudioListener();
+    camera.add(listener);
+    const count = 1;
+    const radius = 3;
+
+
+    const ballGeometry = new THREE.SphereGeometry(0.3, 32, 16);
+    const ballMaterial = new THREE.MeshLambertMaterial({color: 0xcccccc});
+
+    const audioLoader = new THREE.AudioLoader();
+    audioLoader.load('sounds/s1.mp3', function (buffer) {
+        const s = i / count * Math.PI * 2;
+
+        const ball = new THREE.Mesh(ballGeometry, ballMaterial);
+
+        ball.position.x = radius * Math.cos(s);
+        ball.position.z = radius * Math.sin(s);
+
+        const sound = new THREE.PositionalAudio(listener);
+        sound.setBuffer(buffer);
+        sound.setLoop(true);
+        sound.setVolume(10);
+        sound.play();
+        ball.add(sound);
+        scene.add(ball);
+        objectBall.push(ball);
+        analyser = new THREE.AudioAnalyser(sound, 32);
+
+    });
+}
+
+const getFrequencyRangeValue = (data, _frequencyRange) => {
+    const nyquist = 48000 / 2;
+    const lowIndex = Math.round(_frequencyRange[0] / nyquist * data.length);
+    const highIndex = Math.round(_frequencyRange[1] / nyquist * data.length);
+    let total = 0;
+    let numFrequencies = 0;
+
+    for (let i = lowIndex; i <= highIndex; i++) {
+        total += data[i];
+        numFrequencies += 1;
+    }
+    return total / numFrequencies / 255;
+};
+
 
 function animate() {
-  const speed = 1;
-  const height = 1;
-  const time = clock.getElapsedTime();
-  ball.position.y = Math.abs( Math.sin( ( time * speed ) ) * height );
+    if (analyser) {
+        data = analyser.getAverageFrequency();
+        const bass = getFrequencyRangeValue(data, frequencyRange.bass);
+        const mid = getFrequencyRangeValue(data, frequencyRange.mid);
+        const treble = getFrequencyRangeValue(data, frequencyRange.treble);
 
-  renderer.render( scene, camera );
+        let r = bass;
+        let g = mid;
+        let b = treble;
+        console.log(data);
+    }
+    // const time = clock.getElapsedTime();
+    const ball = objectBall[0];
+    if (ball) {
+        ball.position.y = 0.05 * data; //Math.abs( Math.sin( i * offset + ( time * speed ) ) * height );
+    }
+    renderer.render(scene, camera);
 
 }
