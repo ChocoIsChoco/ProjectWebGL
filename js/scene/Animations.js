@@ -1,4 +1,4 @@
-import { balls, isPlaying, analyser, dataArray, THREE } from '../../index.js';
+import { balls, isPlaying, analyser, dataArray, THREE, particles } from '../../index.js';
 
 export function updateVisuals() {
     if (!isPlaying || !analyser) return;
@@ -28,4 +28,29 @@ export function updateVisuals() {
         const scale = 1 + (intensity * 0.5);
         ball.scale.set(scale, scale, scale);
     });
+
+    if (particles) {
+        const positions = particles.geometry.attributes.position.array;
+        const velocities = particles.geometry.userData.velocities;
+        const colors = particles.geometry.attributes.color.array;
+        const intensitySum = dataArray.reduce((a, b) => a + b, 0) / dataArray.length / 255;
+
+        for (let i = 0; i < positions.length / 3; i++) {
+            positions[i * 3] += velocities[i * 3];
+            positions[i * 3 + 1] += velocities[i * 3 + 1];
+            positions[i * 3 + 2] += velocities[i * 3 + 2];
+
+            if (Math.abs(positions[i * 3]) > 25) positions[i * 3] *= -0.9;
+            if (Math.abs(positions[i * 3 + 1]) > 25) positions[i * 3 + 1] *= -0.9;
+            if (Math.abs(positions[i * 3 + 2]) > 25) positions[i * 3 + 2] *= -0.9;
+
+            const hue = (time * 0.1 + (i / (positions.length / 3))) % 1;
+            const color = new THREE.Color().setHSL(hue, 0.8, 0.5 + intensitySum * 0.5);
+            colors[i * 3] = color.r;
+            colors[i * 3 + 1] = color.g;
+            colors[i * 3 + 2] = color.b;
+        }
+        particles.geometry.attributes.position.needsUpdate = true;
+        particles.geometry.attributes.color.needsUpdate = true;
+    }
 }

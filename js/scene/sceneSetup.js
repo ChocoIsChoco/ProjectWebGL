@@ -3,6 +3,8 @@ import {
     setRenderer, setControls
 } from '../../index.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { setupLights } from './Lights.js';
+import { createParticles } from './Particles.js';
 
 export function initScene() {
     camera.position.set(7, 3, 7);
@@ -23,13 +25,8 @@ export function initScene() {
 
     setRenderer(renderer);
 
-    const ambientLight = new THREE.AmbientLight(0xcccccc);
-    scene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
-    directionalLight.position.set(0, 5, 5);
-    directionalLight.castShadow = true;
-    scene.add(directionalLight);
+    setupLights();
+    createParticles();
 
     const floorGeometry = new THREE.PlaneGeometry(10, 10);
     const floorMaterial = new THREE.MeshLambertMaterial({ color: 0x4676b6 });

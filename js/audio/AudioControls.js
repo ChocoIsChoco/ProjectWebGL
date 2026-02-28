@@ -1,6 +1,6 @@
 import {
     audioFileInput, audio, overlay, info, uiControls,
-    pauseButton, continueButton, setIsPlaying, balls
+    pauseButton, continueButton, setIsPlaying, balls, particles
 } from "../../index.js";
 
 export function startAudio() {
@@ -8,6 +8,7 @@ export function startAudio() {
         audio.play();
         setIsPlaying(true);
         balls.forEach(ball => ball.visible = true);
+        if (particles) particles.visible = true;
         overlay.classList.add('hidden');
         uiControls.style.display = 'flex';
         pauseButton.style.display = 'inline-block';
@@ -45,6 +46,7 @@ export function stopAudio() {
             ball.visible = false;
             ball.position.set(ball.userData.baseX || 0, 0, ball.userData.baseZ || 0);
         });
+        if (particles) particles.visible = false;
         audioFileInput.value = "";
         overlay.classList.remove('hidden');
         uiControls.style.display = 'none';
