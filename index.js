@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {initScene} from './js/scene/sceneSetup';
 import { setupEventListeners } from './js/listener/EventListeners.js';
 import {updateVisuals} from './js/scene/Animations';
+import {setupAudioUI, updateUIProgress} from './js/ui/AudioUI.js';
 
 export {THREE};
 
@@ -34,12 +35,14 @@ export const setParticles = (val) => { particles = val; };
 function init() {
     initScene();
     setupEventListeners();
+    setupAudioUI();
     animate();
 }
 
 function animate() {
     requestAnimationFrame(animate);
     updateVisuals();
+    updateUIProgress();
     if (controls) controls.update();
     if (renderer) {
         renderer.render(scene, camera);
