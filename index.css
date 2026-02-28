@@ -22,7 +22,6 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    transition: opacity 0.5s;
 }
 
 .controls {
@@ -85,4 +84,13 @@ button:hover {
 
 .hidden {
     display: none !important;
+}
+
+#ui-controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: none;
+    gap: 10px;
 }
