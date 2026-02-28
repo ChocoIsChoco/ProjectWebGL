@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {initScene} from './js/scene/sceneSetup';
 import { setupEventListeners } from './js/listener/EventListeners.js';
+import {updateVisuals} from './js/scene/Animations';
 
 export {THREE};
 
@@ -18,6 +19,7 @@ export let scene = new THREE.Scene();
 export let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 export let renderer, analyser, audioContext, audio, source, dataArray;
 export let isPlaying = false;
+export let balls = [];
 
 export const setAudio = (val) => { audio = val; };
 export const setAudioContext = (val) => { audioContext = val; };
@@ -25,10 +27,22 @@ export const setAnalyser = (val) => { analyser = val; };
 export const setSource = (val) => { source = val; };
 export const setDataArray = (val) => { dataArray = val; };
 export const setIsPlaying = (val) => { isPlaying = val; };
+export const setRenderer = (val) => { renderer = val; };
 
 function init() {
     initScene();
     setupEventListeners();
+    animate();
 }
 
+function animate() {
+    requestAnimationFrame(animate);
+    updateVisuals();
+    if (renderer) {
+        renderer.render(scene, camera);
+    }
+}
+
+
 init();
+
