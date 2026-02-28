@@ -9,6 +9,7 @@ export function setupAudio(file) {
 
     const newAudio = new Audio(audioURL);
     newAudio.crossOrigin = "anonymous";
+    newAudio.loop = true;
     setAudio(newAudio);
 
     const newAnalyser = audioContext.createAnalyser();
