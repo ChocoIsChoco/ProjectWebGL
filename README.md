@@ -5,7 +5,9 @@ Lien de render : https://visualiseur-audio.onrender.com
 Description du projet
  - but
  - mode d'emploi
-lancer avec npx vite# 
+
+npm install
+lancer avec npx vite ou npm run # 
 
 https://github.com/r21nomi/webcam-audio-visualizer/blob/master/src/index.js
 https://fdoganis.github.io/slides/web3d_projects_20260211.html#117

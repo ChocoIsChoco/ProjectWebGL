@@ -1,6 +1,6 @@
 import {
     THREE, scene, camera, container, balls,
-    setRenderer, setControls
+    setRenderer, setControls, setListener
 } from '../../index.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { setupLights } from './Lights.js';
@@ -9,6 +9,10 @@ import { createParticles } from './Particles.js';
 export function initScene() {
     camera.position.set(7, 3, 7);
     camera.lookAt(0, 0, 0);
+
+    const listener = new THREE.AudioListener();
+    camera.add(listener);
+    setListener(listener);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);

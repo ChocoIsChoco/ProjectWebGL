@@ -18,7 +18,7 @@ export const info = document.getElementById('info');
 
 export let scene = new THREE.Scene();
 export let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-export let renderer, analyser, audioContext, audio, source, dataArray, controls, particles;
+export let renderer, analyser, audioContext, audio, source, dataArray, controls, particles, listener;
 export let isPlaying = false;
 export let balls = [];
 
@@ -31,6 +31,7 @@ export const setIsPlaying = (val) => { isPlaying = val; };
 export const setRenderer = (val) => { renderer = val; };
 export const setControls = (val) => { controls = val; };
 export const setParticles = (val) => { particles = val; };
+export const setListener = (val) => { listener = val; };
 
 function init() {
     initScene();
