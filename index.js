@@ -17,7 +17,7 @@ export const info = document.getElementById('info');
 
 export let scene = new THREE.Scene();
 export let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-export let renderer, analyser, audioContext, audio, source, dataArray;
+export let renderer, analyser, audioContext, audio, source, dataArray, controls;
 export let isPlaying = false;
 export let balls = [];
 
@@ -28,6 +28,7 @@ export const setSource = (val) => { source = val; };
 export const setDataArray = (val) => { dataArray = val; };
 export const setIsPlaying = (val) => { isPlaying = val; };
 export const setRenderer = (val) => { renderer = val; };
+export const setControls = (val) => { controls = val; };
 
 function init() {
     initScene();
@@ -38,6 +39,7 @@ function init() {
 function animate() {
     requestAnimationFrame(animate);
     updateVisuals();
+    if (controls) controls.update();
     if (renderer) {
         renderer.render(scene, camera);
     }

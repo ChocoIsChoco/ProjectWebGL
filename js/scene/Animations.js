@@ -1,23 +1,31 @@
 import { balls, isPlaying, analyser, dataArray, THREE } from '../../index.js';
 
 export function updateVisuals() {
-
     if (!isPlaying || !analyser) return;
 
     analyser.getByteFrequencyData(dataArray);
-    const step = Math.floor(dataArray.length / 5);
+    const time = Date.now() * 0.001;
+    const speed = 2.5;
 
     balls.forEach((ball, i) => {
-        let sum = 0;
-        for (let j = 0; j < step; j++) {
-            sum += dataArray[i * step + j];
-        }
-        const average = sum / step;
+        const binIndex = i % (dataArray.length / 2);
+        const intensity = dataArray[binIndex] / 255.0;
+        
+        const height = 0.5 + (intensity * 2);
+        const offset = ball.userData.offset;
 
-        const targetY = (average / 255) * 15;
-        ball.position.y = THREE.MathUtils.lerp(ball.position.y, targetY, 0.15);
+        ball.position.y = Math.abs(Math.sin(offset + (time * speed)) * height);
 
-        const hue = (average / 255);
+        const wobbleX = Math.cos(time * 0.5 + offset) * (intensity * 2);
+        const wobbleZ = Math.sin(time * 0.5 + offset) * (intensity * 2);
+
+        ball.position.x = (ball.userData.baseX || 0) + wobbleX;
+        ball.position.z = (ball.userData.baseZ || 0) + wobbleZ;
+
+        const hue = (intensity + (i / balls.length)) % 1;
         ball.material.color.setHSL(hue, 0.8, 0.5);
+
+        const scale = 1 + (intensity * 0.5);
+        ball.scale.set(scale, scale, scale);
     });
 }
