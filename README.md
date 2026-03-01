@@ -54,7 +54,7 @@ ProjectWebGL/
 ├── js/
 │   ├── audio/           # Gestion audio et analyse
 │   ├── scene/           # Scène 3D et animations
-│   ├── listener/        # Gestion des événements
+│   ├── listener/        # Gestion des événements et interactions
 │   └── ui/             # Interface utilisateur
 ├── sounds/             # Fichiers audio exemples
 ├── index.html          # Page principale
@@ -114,6 +114,11 @@ Cette architecture modulaire facilite la prise en main et évite d'avoir des fic
 - **Éléments phares** : File input, contrôles UI
 - **Fonctionnalités** : Upload audio, contrôles play/pause
 
+### `js/listener/MouseInteractions.js` - Interactions avancées
+- **Rôle** : Gère les interactions souris/trackpad et clavier
+- **Éléments phares** : Raycasting, hover effects, shortcuts
+- **Fonctionnalités** : Click sur balls, hover visuel, raccourcis clavier
+
 ### `js/ui/AudioUI.js` - Interface avancée
 - **Rôle** : Interface utilisateur étendue
 - **Éléments phares** : Progress bar, volume, changement de formes
@@ -134,6 +139,8 @@ Cette architecture modulaire facilite la prise en main et évite d'avoir des fic
 ### Interactions
 - **Interface complète** : Play/pause/stop/volume/progression
 - **Formes interchangeables** : Sphères, cubes, pyramides
+- **Souris/Trackpad** : Hover et click sur les balls pour effet "pulse"
+- **Clavier** : Espace (play/pause), R (reset caméra)
 
 
 ## 🎨 Choix techniques
@@ -162,6 +169,7 @@ Ce projet s'est inspiré de plusieurs ressources :
 - [Three.js Examples](https://github.com/mrdoob/three.js/blob/master/examples/webaudio_timing.html) - Pour les patterns de code
 - [Web Audio MDN](https://developer.mozilla.org/en-US/docs/Web_Audio_API) - Pour l'API Web Audio
 - [Three.js Audio Examples](https://threejs.org/examples/?q=audio) - Pour les exemples audio
+- [Three.js Examples - Interactive](https://threejs.org/examples/?q=interactive) - Pour les interactions 3D
 - [Three.js Particles](https://threejs.org/examples/?q=particles#webgl_particles_random) - Pour le système de particules
 
 ## 🚀 Déploiement
