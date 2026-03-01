@@ -5,7 +5,25 @@ let progressBar, volumeSlider;
 export function setupAudioUI() {
     const uiContainer = document.createElement('div');
     uiContainer.id = 'extra-ui';
-    uiContainer.style.cssText = 'position: fixed; bottom: 80px; left: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 2000; width: 300px; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 10px; backdrop-filter: blur(5px);';
+    uiContainer.className = 'responsive-ui';
+    uiContainer.style.cssText = 'position: fixed; bottom: 80px; left: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 2000; width: 300px; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 10px; backdrop-filter: blur(5px); transition: all 0.3s;';
+
+    const style = document.createElement('style');
+    style.textContent = `
+        @media (max-width: 600px) {
+            .responsive-ui {
+                width: calc(100% - 40px) !important;
+                bottom: 60px !important;
+                left: 20px !important;
+                padding: 10px !important;
+            }
+            .responsive-ui button {
+                padding: 8px 5px !important;
+                font-size: 9px !important;
+            }
+        }
+    `;
+    document.head.appendChild(style);
 
     progressBar = document.createElement('input');
     progressBar.type = 'range';

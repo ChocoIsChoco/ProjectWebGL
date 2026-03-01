@@ -37,7 +37,16 @@ function init() {
     initScene();
     setupEventListeners();
     setupAudioUI();
+    window.addEventListener('resize', onWindowResize);
     animate();
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    if (renderer) {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
 }
 
 function animate() {
