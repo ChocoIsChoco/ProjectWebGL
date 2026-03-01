@@ -177,6 +177,7 @@ Ce projet s'est inspiré de plusieurs ressources :
 - [Three.js Examples - Interactive](https://threejs.org/examples/?q=interactive) - Pour les interactions 3D
 - [Three.js Geometry Dynamic](https://threejs.org/examples/?q=dynamic#webgl_geometry_dynamic) - Pour la génération de terrain
 - [Three.js Particles](https://threejs.org/examples/?q=particles#webgl_particles_random) - Pour le système de particules
+- [MIT License](https://opensource.org/licenses/MIT) - Pour la licence du projet
 
 ## 🚀 Déploiement
 
@@ -197,4 +198,40 @@ Ce projet est conçu comme base pour une adaptation en réalité augmentée :
 
 ---
 
-**Développé avec ❤️ pour le cours WebGL à Geodata Paris**
+## 📄 Licence
+
+Ce projet est publié sous licence MIT. Vous êtes libre de l'utiliser, de le modifier et de le distribuer selon les termes de cette licence.
+
+### 📋 Conditions de la licence MIT :
+- **✅ Utilisation commerciale** : Autorisée
+- **✅ Modification** : Autorisée  
+- **✅ Distribution** : Autorisée
+- **✅ Utilisation privée** : Autorisée
+- **⚠️ Obligation** : Inclure la licence et le copyright
+- **⚠️ Responsabilité** : Aucune garantie fournie
+
+### 📝 Texte complet de la licence :
+
+```
+MIT License
+
+Copyright (c) 2026 ChocoIsChoco
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
