@@ -104,6 +104,11 @@ Cette architecture modulaire facilite la prise en main et évite d'avoir des fic
 - **Éléments phares** : Système particulaire, couleurs dynamiques
 - **Fonctionnalités** : Particules réactives à l'audio, effets visuels
 
+### `js/scene/Terrain.js` - Génération de terrain
+- **Rôle** : Crée un terrain 3D procédural avec ondulations
+- **Éléments phares** : PlaneGeometry modifiée, fonctions sin/cos, distance conditionnelle
+- **Fonctionnalités** : Terrain ondulé avec centre plat pour les balls, support des ombres
+
 ### `js/scene/Lights.js` - Éclairage
 - **Rôle** : Configure l'éclairage de la scène
 - **Éléments phares** : Lumières ambiantes, directionnelles
@@ -170,6 +175,7 @@ Ce projet s'est inspiré de plusieurs ressources :
 - [Web Audio MDN](https://developer.mozilla.org/en-US/docs/Web_Audio_API) - Pour l'API Web Audio
 - [Three.js Audio Examples](https://threejs.org/examples/?q=audio) - Pour les exemples audio
 - [Three.js Examples - Interactive](https://threejs.org/examples/?q=interactive) - Pour les interactions 3D
+- [Three.js Geometry Dynamic](https://threejs.org/examples/?q=dynamic#webgl_geometry_dynamic) - Pour la génération de terrain
 - [Three.js Particles](https://threejs.org/examples/?q=particles#webgl_particles_random) - Pour le système de particules
 
 ## 🚀 Déploiement

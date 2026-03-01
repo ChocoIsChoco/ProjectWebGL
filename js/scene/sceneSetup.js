@@ -5,6 +5,7 @@ import {
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { setupLights } from './Lights.js';
 import { createParticles } from './Particles.js';
+import { createTerrain } from './Terrain.js';
 
 export function initScene() {
     camera.position.set(7, 3, 7);
@@ -32,12 +33,8 @@ export function initScene() {
     setupLights();
     createParticles();
 
-    const floorGeometry = new THREE.PlaneGeometry(10, 10);
-    const floorMaterial = new THREE.MeshLambertMaterial({ color: 0x4676b6 });
-    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    floor.rotation.x = -Math.PI / 2;
-    floor.receiveShadow = true;
-    scene.add(floor);
+    const terrain = createTerrain();
+    scene.add(terrain);
 
     createReactiveBalls();
 }
