@@ -1,7 +1,0 @@
-{
-  "editor.formatOnSave": true,
-  "conventionalCommits.scopes": [
-    "vite",
-    "vscode"
-  ]
-}

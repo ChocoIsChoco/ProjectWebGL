@@ -1,33 +1,25 @@
+.idea/
+.vscode/
+node_modules/
+.zencoder
+.zenflow
+dist/
+ts/
+
+# Compilations
+main.js
+main.js.map
+*.tsbuildinfo
+
+# Environnement
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
 # Logs
-logs
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-.cert
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/settings.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-*.map
-
-# Local Netlify folder
-.netlify
-

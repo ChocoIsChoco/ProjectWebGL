@@ -10,7 +10,23 @@
 </head>
 
 <body>
+   <div id="overlay">
+      <div class="controls">
+          <h1>Visualiseur Audio 3D</h1>
+          <input type="file" id="audioFile" accept="audio/*" />
+          <button id="startButton">Démarrer</button>
+      </div>
+  </div>
+
+  <div id="ui-controls">
+      <button id="pauseButton">Pause</button>
+      <button id="continueButton">Reprendre</button>
+      <button id="stopButton">Arrêter</button>
+  </div>
   <div id="container"></div>
+  <div id="info">
+      <p>Chargez un fichier audio et démarrez le visualiseur</p>
+  </div>
   <!--
   <script src="./jsm/libs/ammo.wasm.js"></script>
   -->
