@@ -19,9 +19,7 @@ import {
     MeshBasicMaterial,
     Color,
     CylinderGeometry,
-    HemisphereLight,
     Mesh,
-    MeshNormalMaterial,
     MeshPhongMaterial,
     PerspectiveCamera,
     Raycaster,
@@ -31,7 +29,7 @@ import {
     Points,
     PointsMaterial,
     AudioListener,
-    DirectionalLight, 
+    DirectionalLight,
     PointLight,
     WebGLRenderer,
     PositionalAudio,
@@ -42,13 +40,9 @@ import {
 } from 'three';
 
 import * as TWEEN from '@tweenjs/tween.js';
-
 import { XRButton } from 'three/addons/webxr/XRButton.js';
 
-
 let hitTestSourceRequested = false;
-
-
 
 const overlay = document.getElementById('overlay') as HTMLElement;
 const audioFileInput = document.getElementById('audioFile') as HTMLInputElement;
@@ -65,7 +59,6 @@ const renderer = new WebGLRenderer({ antialias: true, alpha: true });
 
 let analyser: AnalyserNode,
     audio: HTMLAudioElement,
-    source: MediaElementAudioSourceNode,
     dataArray: Uint8Array,
     particles: Points,
     listener: AudioListener,
@@ -77,9 +70,16 @@ let volumeSlider: HTMLInputElement;
 let tmpColor = new Color();
 let userHeading = 0;
 
-
 let hitTestSource: XRHitTestSource | null = null;
 let terrain: Mesh;
+
+const zzfx = (...t: number[]) => {
+    let e = new AudioContext, n = e.createBuffer(1, 99999, 44100),
+        o = n.getChannelData(0);
+    for (let t = 0; t < 99999; t++) o[t] = Math.random() * 2 - 1;
+    let a = e.createBufferSource();
+    a.buffer = n; a.connect(e.destination); a.start();
+};
 
 const timer = new Timer();
 timer.connect(document);
@@ -152,8 +152,6 @@ function init() {
     initGeolocation();
 }
 
-
-
 function initScene(): void {
     scene.add(camera);
     camera.position.set(7, 3, 7);
@@ -161,7 +159,7 @@ function initScene(): void {
 
     listener = new AudioListener();
     camera.add(listener);
-   
+
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true;
@@ -190,7 +188,6 @@ function initScene(): void {
         }
 
         if (reticle.visible) {
-
             const material = new MeshPhongMaterial({ color: 0xffffff * Math.random() });
             const mesh = new Mesh(geometry, material);
             reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
@@ -199,7 +196,6 @@ function initScene(): void {
             scene.add(mesh);
             physicsObjects.push(mesh);
 
-            // Haptic Feedback
             const session = renderer.xr.getSession();
             if (session && event.inputSource && event.inputSource.gamepad && event.inputSource.gamepad.hapticActuators) {
                 const actuator = event.inputSource.gamepad.hapticActuators[0];
@@ -207,9 +203,7 @@ function initScene(): void {
                     actuator.pulse(0.6, 100);
                 }
             }
-
         }
-
     }
 
     const controller1 = renderer.xr.getController(0);
@@ -219,7 +213,6 @@ function initScene(): void {
     const controller2 = renderer.xr.getController(1);
     controller2.addEventListener('select', onSelect);
     scene.add(controller2);
-
 
     reticle = new Mesh(
         new RingGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
@@ -231,8 +224,6 @@ function initScene(): void {
 
     window.addEventListener('resize', onWindowResize);
 
-
-
     setupLights();
     createParticles();
 
@@ -243,7 +234,6 @@ function initScene(): void {
     createSpatialUI();
     createCompass();
 
-    // AR Shadow Floor
     const floorGeom = new PlaneGeometry(100, 100);
     const floorMat = new ShadowMaterial({ opacity: 0.3 });
     const floor = new Mesh(floorGeom, floorMat);
@@ -287,9 +277,6 @@ function onWindowResize() {
     }
 }
 
-
-// Lights.ts
-
 function setupLights(): void {
     const ambientLight = new AmbientLight(0x404040, 0.5);
     scene.add(ambientLight);
@@ -318,8 +305,6 @@ function setupLights(): void {
     scene.add(pointLight3);
 }
 
-
-
 let micStream: MediaStream | null = null;
 let micAnalyser: AnalyserNode | null = null;
 let micDataArray: Uint8Array | null = null;
@@ -338,13 +323,14 @@ async function setupMicrophone() {
         console.error('Erreur microphone:', err);
     }
 }
+
 function setupAudio(file: File): void {
     const audioURL = URL.createObjectURL(file);
 
     audio = new Audio(audioURL);
     audio.crossOrigin = "anonymous";
     audio.loop = true;
-    
+
     const positionalAudio = new PositionalAudio(listener);
     positionalAudio.setMediaElementSource(audio);
     positionalAudio.setRefDistance(5);
@@ -357,12 +343,10 @@ function setupAudio(file: File): void {
     analyser = listener.context.createAnalyser();
     analyser.fftSize = 256;
     analyser.smoothingTimeConstant = 0.8;
-    
 
     const source = listener.context.createMediaElementSource(audio);
     source.connect(analyser);
     analyser.connect(positionalAudio.gain);
-   
 
     const bufferLength = analyser.frequencyBinCount;
     dataArray = new Uint8Array(bufferLength);
@@ -370,9 +354,8 @@ function setupAudio(file: File): void {
     info.textContent = `Fichier chargé (3D): ${file.name}`;
 }
 
-
 let compass: Mesh;
-const TARGET_COORD = { lat: 48.8584, lon: 2.2945 }; // Eiffel Tower
+const TARGET_COORD = { lat: 48.8584, lon: 2.2945 };
 
 function createCompass(): void {
     const compassGeom = new ConeGeometry(0.1, 0.4, 4);
@@ -380,9 +363,8 @@ function createCompass(): void {
     compass = new Mesh(compassGeom, compassMat);
     compass.rotation.x = Math.PI / 2;
     compass.position.set(0, 0, -2);
-    camera.add(compass); // Follow camera
+    camera.add(compass);
 }
-
 
 function updateCompass(): void {
     if (!compass) return;
@@ -404,46 +386,43 @@ function initGeolocation(): void {
     });
 }
 
-// Terrain.ts
-
 function createTerrain(): Mesh {
     const size = 15;
     const segments = 64;
     const geometry = new PlaneGeometry(size, size, segments, segments);
-    
+
     const pos = geometry.attributes.position;
     for (let i = 0; i < pos.count; i++) {
         const x = pos.getX(i);
         const y = pos.getY(i);
-        
+
         const dist = Math.sqrt(x * x + y * y);
         let height = 0;
-        
+
         if (dist > 2) {
             height = Math.sin(x * 0.8) * Math.cos(y * 0.8) * 0.8;
             height += Math.sin(x * 2.0 + y * 1.5) * 0.2;
         }
-        
+
         pos.setZ(i, height);
     }
-    
+
     geometry.computeVertexNormals();
-    
+
     const material = new MeshLambertMaterial({
         color: 0x4676b6,
         wireframe: false,
         side: DoubleSide
     });
-    
+
     const terrain = new Mesh(geometry, material);
     terrain.rotation.x = -Math.PI / 2;
     terrain.receiveShadow = true;
     terrain.castShadow = true;
-    
+
     return terrain;
 }
 
-// Particles.ts
 function createParticles(): void {
     const geometry = new BufferGeometry();
     const count = 2000;
@@ -481,8 +460,6 @@ function createParticles(): void {
     scene.add(particles);
 }
 
-
-// Animations.ts
 function updateVisuals(): void {
     const time = Date.now() * 0.001;
     const speed = 2.5;
@@ -499,7 +476,7 @@ function updateVisuals(): void {
         balls.forEach((ball, i) => {
             const binIndex = i % (dataArray.length / 2);
             const intensity = (dataArray[binIndex] / 255.0) + micIntensity;
-            
+
             const height = 0.5 + (intensity * 2);
             const offset = ball.userData.offset;
 
@@ -518,7 +495,6 @@ function updateVisuals(): void {
             ball.scale.set(scale, scale, scale);
         });
     } else if (micIntensity > 0.1) {
-        // Reactive balls even without music
         balls.forEach((ball, i) => {
             const scale = 1 + (micIntensity * 3);
             ball.scale.lerp(new Vector3(scale, scale, scale), 0.1);
@@ -530,8 +506,8 @@ function updateVisuals(): void {
         const positions = particles.geometry.attributes.position.array as Float32Array;
         const velocities = (particles.geometry.userData as any).velocities;
         const colors = particles.geometry.attributes.color.array as Float32Array;
-        const intensitySum = (isPlaying && analyser) 
-            ? (dataArray as any).reduce((a: number, b: number) => a + b, 0) / dataArray.length / 255 
+        const intensitySum = (isPlaying && analyser)
+            ? (dataArray as any).reduce((a: number, b: number) => a + b, 0) / dataArray.length / 255
             : micIntensity;
 
         for (let i = 0; i < positions.length / 3; i++) {
@@ -557,7 +533,7 @@ function updateVisuals(): void {
 
 let gazeTimer = 0;
 let gazeTarget: Mesh | null = null;
-const GAZE_TIME = 1000; // 1 second
+const GAZE_TIME = 1000;
 
 function updateGaze(frame: XRFrame) {
     const session = renderer.xr.getSession();
@@ -608,20 +584,19 @@ const GRAVITY = -9.8;
 function updatePhysics(delta: number) {
     physicsObjects.forEach(obj => {
         if (!obj.userData.velocity) obj.userData.velocity = new Vector3();
-        
-        // Gravity
+
         obj.userData.velocity.y += GRAVITY * delta;
         obj.position.addScaledVector(obj.userData.velocity, delta);
 
-        // Ground collision (y=0 for simplicity in AR)
         if (obj.position.y < 0) {
             obj.position.y = 0;
-            obj.userData.velocity.y *= -0.5; // Bounce
-            obj.userData.velocity.x *= 0.8; // Friction
+            obj.userData.velocity.y *= -0.5;
+            obj.userData.velocity.x *= 0.8;
             obj.userData.velocity.z *= 0.8;
         }
     });
 }
+
 const mouse = new Vector2();
 let hoveredBall: Mesh | null = null;
 
@@ -681,12 +656,12 @@ function setupKeyboardShortcuts(playPauseCallback: () => void): void {
         if (event.code === 'Enter') {
             onSelect({ target: renderer.xr.getController(0) });
         }
-        
+
         if (event.code === 'Space') {
             event.preventDefault();
             playPauseCallback();
         }
-        
+
         if (event.code === 'KeyR') {
             camera.position.set(7, 3, 7);
             camera.lookAt(0, 0, 0);
@@ -694,8 +669,6 @@ function setupKeyboardShortcuts(playPauseCallback: () => void): void {
     });
 }
 
-
-// EventListeners.ts
 function setupEventListeners(): void {
     audioFileInput.value = "";
     audioFileInput.addEventListener('change', (e: Event) => {
@@ -712,7 +685,7 @@ function setupEventListeners(): void {
     if (container) {
         setupMouseInteractions(container);
     }
-    
+
     setupKeyboardShortcuts(() => {
         if (isPlaying) {
             pauseAudio();
@@ -722,8 +695,6 @@ function setupEventListeners(): void {
     });
 }
 
-
-// AudioControls.ts
 function startAudio(): void {
     if (audio) {
         if (listener && listener.context.state === 'suspended') {
@@ -778,13 +749,9 @@ export function stopAudio(): void {
     }
 }
 
-
-
 let spatialButtons: Mesh[] = [];
 
 function createSpatialUI(): void {
-    const group = new Scene(); // We'll add this to the main scene
-    
     const panelGeom = new PlaneGeometry(1, 0.5);
     const panelMat = new MeshPhongMaterial({ color: 0x333333, transparent: true, opacity: 0.8 });
     const panel = new Mesh(panelGeom, panelMat);
@@ -792,7 +759,7 @@ function createSpatialUI(): void {
     scene.add(panel);
 
     const btnGeom = new BoxGeometry(0.3, 0.2, 0.05);
-    
+
     const redBtn = new Mesh(btnGeom, new MeshPhongMaterial({ color: 0xff0000 }));
     redBtn.position.set(-0.25, 1.5, -0.95);
     redBtn.userData.action = () => balls.forEach(b => (b.material as MeshPhongMaterial).color.set(0xff0000));
@@ -805,6 +772,7 @@ function createSpatialUI(): void {
     scene.add(blueBtn);
     spatialButtons.push(blueBtn);
 }
+
 function setupAudioUI(): void {
     const uiContainer = document.createElement('div');
     uiContainer.id = 'extra-ui';
