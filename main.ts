@@ -76,6 +76,7 @@ let balls: Mesh[] = [];
 let progressBar: HTMLInputElement;
 let volumeSlider: HTMLInputElement;
 let tmpColor = new Color();
+let userHeading = 0;
 
 
 let hitTestSource: XRHitTestSource | null = null;
@@ -150,6 +151,7 @@ function init() {
     setupEventListeners();
     setupAudioUI();
     animate();
+    initGeolocation();
 }
 
 
@@ -195,7 +197,7 @@ function initScene(): void {
             const mesh = new Mesh(geometry, material);
             reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
             mesh.scale.y = Math.random() * 2 + 1;
-            mesh.userData.velocity = new Vector3(0, 2, 0); // initial upward pop
+            mesh.userData.velocity = new Vector3(0, 2, 0);
             scene.add(mesh);
             physicsObjects.push(mesh);
 
@@ -382,12 +384,25 @@ function createCompass(): void {
     camera.add(compass); // Follow camera
 }
 
+
 function updateCompass(): void {
     if (!compass) return;
-    
-    // Virtual orientation (mocking real GPS logic for simplicity in browser)
-    const time = Date.now() * 0.001;
-    compass.rotation.z = Math.sin(time) * 0.5; // Oscillate like a real compass
+    compass.rotation.z = userHeading;
+}
+
+function initGeolocation(): void {
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.watchPosition((pos) => {
+        const lat1 = pos.coords.latitude * Math.PI / 180;
+        const lat2 = TARGET_COORD.lat * Math.PI / 180;
+        const dLon = (TARGET_COORD.lon - pos.coords.longitude) * Math.PI / 180;
+
+        const y = Math.sin(dLon) * Math.cos(lat2);
+        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+
+        userHeading = -Math.atan2(y, x);
+    });
 }
 
 // Terrain.ts
