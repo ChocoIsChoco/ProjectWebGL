@@ -67,7 +67,6 @@ let analyser: AnalyserNode,
     audio: HTMLAudioElement,
     source: MediaElementAudioSourceNode,
     dataArray: Uint8Array,
-    controls: any,
     particles: Points,
     listener: AudioListener,
     reticle: Mesh;
@@ -92,7 +91,6 @@ function animate(timestamp?: number, frame?: XRFrame) {
     updateUIProgress();
     updatePhysics(delta);
     updateCompass();
-    if (controls) controls.update();
 
     if (frame) {
         updateGaze(frame);
