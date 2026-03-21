@@ -42,12 +42,9 @@ import {
 } from 'three';
 
 import * as TWEEN from '@tweenjs/tween.js';
-import { DevUI } from '@iwer/devui';
-import { XRDevice, metaQuest3 } from 'iwer';
+
 import { XRButton } from 'three/addons/webxr/XRButton.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { XRController } from 'iwer/lib/device/XRController';
+
 
 let hitTestSourceRequested = false;
 
@@ -177,14 +174,6 @@ function initScene(): void {
     });
     xrButton.style.backgroundColor = 'skyblue';
     document.body.appendChild(xrButton);
-
-    // const controls = new OrbitControls(camera, renderer.domElement);
-    // controls.enableDamping = true;
-    // controls.target.set(0, 1.6, 0);
-    // controls.update();
-    // controls.minDistance = 1;
-    // controls.maxDistance = 25;
-    // setControls(controls);
 
     const geometry = new CylinderGeometry(0.1, 0.1, 0.2, 32).translate(0, 0.1, 0);
     function onSelect(event: any) {
