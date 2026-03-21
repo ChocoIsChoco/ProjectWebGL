@@ -250,6 +250,7 @@ function initScene(): void {
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     scene.add(floor);
+    initDeviceOrientation();
 }
 
 function createReactiveBalls(): void {
@@ -912,6 +913,14 @@ function changeBallsShape(shapeType: string): void {
         ball.geometry.dispose();
         ball.geometry = newGeometry;
     });
+}
+
+function initDeviceOrientation(): void {
+    window.addEventListener('deviceorientationabsolute', (event: any) => {
+        if (event.alpha === null) return;
+        const alpha = event.alpha * Math.PI / 180;
+        userHeading = userHeading - alpha;
+    }, true);
 }
 
 init();
