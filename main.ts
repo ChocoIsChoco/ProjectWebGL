@@ -919,7 +919,7 @@ function initDeviceOrientation(): void {
     window.addEventListener('deviceorientationabsolute', (event: any) => {
         if (event.alpha === null) return;
         const alpha = event.alpha * Math.PI / 180;
-        userHeading = userHeading - alpha;
+        userHeading = - alpha;
     }, true);
 }
 
