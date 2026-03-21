@@ -27,6 +27,7 @@ import {
     Raycaster,
     Scene,
     Vector2,
+    Vector3,
     Points,
     PointsMaterial,
     AudioListener,
@@ -35,29 +36,20 @@ import {
     WebGLRenderer,
     PositionalAudio,
     PlaneGeometry,
+    ShadowMaterial,
     MeshLambertMaterial,
     DoubleSide
 } from 'three';
 
-let hitTestSourceRequested = false;
-// XR Emulator
+import * as TWEEN from '@tweenjs/tween.js';
 import { DevUI } from '@iwer/devui';
 import { XRDevice, metaQuest3 } from 'iwer';
-
-// XR
 import { XRButton } from 'three/addons/webxr/XRButton.js';
-
-
-
-// Consider using alternatives like Oimo or cannon-es
-import {
-    OrbitControls
-} from 'three/addons/controls/OrbitControls.js';
-
-import {
-    GLTFLoader
-} from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { XRController } from 'iwer/lib/device/XRController';
+
+let hitTestSourceRequested = false;
 
 
 
@@ -77,10 +69,11 @@ const renderer = new WebGLRenderer({ antialias: true, alpha: true });
 let analyser: AnalyserNode,
     audio: HTMLAudioElement,
     source: MediaElementAudioSourceNode,
-    dataArray: Uint8Array<ArrayBuffer>,
+    dataArray: Uint8Array,
     controls: any,
     particles: Points,
-    listener: AudioListener;
+    listener: AudioListener,
+    reticle: Mesh;
 let isPlaying = false;
 let balls: Mesh[] = [];
 let progressBar: HTMLInputElement;
@@ -88,30 +81,74 @@ let volumeSlider: HTMLInputElement;
 
 
 
-let hitTestSource = null;
-
-
-
-
+let hitTestSource: XRHitTestSource | null = null;
+let terrain: Mesh;
 
 const timer = new Timer();
 timer.connect(document);
 
-function animate() {
-    renderer.setAnimationLoop(animate);
+function animate(timestamp?: number, frame?: XRFrame) {
+    const delta = timer.getDelta();
+    TWEEN.update();
     updateVisuals();
     updateUIProgress();
+    updatePhysics(delta);
+    updateCompass();
     if (controls) controls.update();
+
+    if (frame) {
+        updateGaze(frame);
+        const referenceSpace = renderer.xr.getReferenceSpace();
+        const session = renderer.xr.getSession();
+
+        if (!hitTestSourceRequested) {
+            session?.requestReferenceSpace('viewer').then((referenceSpace) => {
+                session?.requestHitTestSource?.({ space: referenceSpace })?.then((source) => {
+                    hitTestSource = source;
+                });
+            });
+
+            session?.addEventListener('end', () => {
+                hitTestSourceRequested = false;
+                hitTestSource = null;
+                if (terrain) terrain.visible = true;
+            });
+
+            hitTestSourceRequested = true;
+            if (terrain) terrain.visible = false;
+
+            balls.forEach((ball, i) => {
+                ball.visible = true;
+                const angle = (i / balls.length) * Math.PI - Math.PI / 2;
+                ball.position.set(
+                    Math.cos(angle) * 2,
+                    1.2,
+                    Math.sin(angle) * 2 - 2
+                );
+            });
+        }
+
+        if (referenceSpace && hitTestSource) {
+            const hitTestResults = frame.getHitTestResults(hitTestSource);
+            if (hitTestResults.length) {
+                const hit = hitTestResults[0];
+                const pose = hit.getPose(referenceSpace);
+                if (pose && reticle) {
+                    reticle.visible = true;
+                    reticle.matrix.fromArray(pose.transform.matrix);
+                }
+            } else if (reticle) {
+                reticle.visible = false;
+            }
+        }
+    }
+
     if (renderer) {
         renderer.render(scene, camera);
     }
 }
 
 function init() {
-    const xrButton = XRButton.createButton(renderer, {});
-    xrButton.style.backgroundColor = 'skyblue';
-    document.body.appendChild(xrButton);
-
     initScene();
     setupEventListeners();
     setupAudioUI();
@@ -124,6 +161,7 @@ init();
 
 
 function initScene(): void {
+    scene.add(camera);
     camera.position.set(7, 3, 7);
     camera.lookAt(0, 0, 0);
 
@@ -137,7 +175,9 @@ function initScene(): void {
 
     container.appendChild(renderer.domElement);
 
-    const xrButton = XRButton.createButton(renderer, {});
+    const xrButton = XRButton.createButton(renderer, {
+        optionalFeatures: ['local-floor', 'hit-test']
+    });
     xrButton.style.backgroundColor = 'skyblue';
     document.body.appendChild(xrButton);
 
@@ -150,7 +190,18 @@ function initScene(): void {
     // setControls(controls);
 
     const geometry = new CylinderGeometry(0.1, 0.1, 0.2, 32).translate(0, 0.1, 0);
-    function onSelect() {
+    function onSelect(event: any) {
+        const controller = event.target;
+        raycaster.set(controller.position, controller.getWorldDirection(new Vector3()).negate());
+        const intersects = raycaster.intersectObjects([...balls, ...spatialButtons]);
+
+        if (intersects.length > 0) {
+            const object = intersects[0].object as Mesh;
+            if (object.userData.action) {
+                object.userData.action();
+                return;
+            }
+        }
 
         if (reticle.visible) {
 
@@ -158,7 +209,18 @@ function initScene(): void {
             const mesh = new Mesh(geometry, material);
             reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
             mesh.scale.y = Math.random() * 2 + 1;
+            mesh.userData.velocity = new Vector3(0, 2, 0); // initial upward pop
             scene.add(mesh);
+            physicsObjects.push(mesh);
+
+            // Haptic Feedback
+            const session = renderer.xr.getSession();
+            if (session && event.inputSource && event.inputSource.gamepad && event.inputSource.gamepad.hapticActuators) {
+                const actuator = event.inputSource.gamepad.hapticActuators[0];
+                if (actuator) {
+                    actuator.pulse(0.6, 100);
+                }
+            }
 
         }
 
@@ -168,8 +230,12 @@ function initScene(): void {
     controller1.addEventListener('select', onSelect);
     scene.add(controller1);
 
+    const controller2 = renderer.xr.getController(1);
+    controller2.addEventListener('select', onSelect);
+    scene.add(controller2);
 
-    const reticle = new Mesh(
+
+    reticle = new Mesh(
         new RingGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
         new MeshBasicMaterial()
     );
@@ -184,10 +250,20 @@ function initScene(): void {
     setupLights();
     createParticles();
 
-    const terrain = createTerrain();
+    terrain = createTerrain();
     scene.add(terrain);
 
     createReactiveBalls();
+    createSpatialUI();
+    createCompass();
+
+    // AR Shadow Floor
+    const floorGeom = new PlaneGeometry(100, 100);
+    const floorMat = new ShadowMaterial({ opacity: 0.3 });
+    const floor = new Mesh(floorGeom, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
 }
 
 function createReactiveBalls(): void {
@@ -257,8 +333,24 @@ function setupLights(): void {
 
 
 
-// AudioSetup.ts
+let micStream: MediaStream | null = null;
+let micAnalyser: AnalyserNode | null = null;
+let micDataArray: Uint8Array | null = null;
 
+async function setupMicrophone() {
+    try {
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const audioContext = listener.context;
+        const source = audioContext.createMediaStreamSource(micStream);
+        micAnalyser = audioContext.createAnalyser();
+        micAnalyser.fftSize = 256;
+        source.connect(micAnalyser);
+        micDataArray = new Uint8Array(micAnalyser.frequencyBinCount);
+        info.textContent = 'Microphone activé !';
+    } catch (err) {
+        console.error('Erreur microphone:', err);
+    }
+}
 function setupAudio(file: File): void {
     const audioURL = URL.createObjectURL(file);
 
@@ -291,6 +383,26 @@ function setupAudio(file: File): void {
     info.textContent = `Fichier chargé (3D): ${file.name}`;
 }
 
+
+let compass: Mesh;
+const TARGET_COORD = { lat: 48.8584, lon: 2.2945 }; // Eiffel Tower
+
+function createCompass(): void {
+    const compassGeom = new ConeGeometry(0.1, 0.4, 4);
+    const compassMat = new MeshPhongMaterial({ color: 0xff0000 });
+    compass = new Mesh(compassGeom, compassMat);
+    compass.rotation.x = Math.PI / 2;
+    compass.position.set(0, 0, -2);
+    camera.add(compass); // Follow camera
+}
+
+function updateCompass(): void {
+    if (!compass) return;
+    
+    // Virtual orientation (mocking real GPS logic for simplicity in browser)
+    const time = Date.now() * 0.001;
+    compass.rotation.z = Math.sin(time) * 0.5; // Oscillate like a real compass
+}
 
 // Terrain.ts
 
@@ -372,44 +484,61 @@ function createParticles(): void {
 
 // Animations.ts
 function updateVisuals(): void {
-    if (!isPlaying || !analyser) return;
-
-    analyser.getByteFrequencyData(dataArray);
     const time = Date.now() * 0.001;
     const speed = 2.5;
 
-    balls.forEach((ball, i) => {
-        const binIndex = i % (dataArray.length / 2);
-        const intensity = dataArray[binIndex] / 255.0;
-        
-        const height = 0.5 + (intensity * 2);
-        const offset = ball.userData.offset;
+    let micIntensity = 0;
+    if (micAnalyser && micDataArray) {
+        micAnalyser.getByteFrequencyData(micDataArray as any);
+        micIntensity = (micDataArray as any).reduce((a: number, b: number) => a + b, 0) / micDataArray.length / 255;
+    }
 
-        ball.position.y = Math.abs(Math.sin(offset + (time * speed)) * height);
+    if (isPlaying && analyser) {
+        analyser.getByteFrequencyData(dataArray as any);
 
-        const wobbleX = Math.cos(time * 0.5 + offset) * (intensity * 2);
-        const wobbleZ = Math.sin(time * 0.5 + offset) * (intensity * 2);
+        balls.forEach((ball, i) => {
+            const binIndex = i % (dataArray.length / 2);
+            const intensity = (dataArray[binIndex] / 255.0) + micIntensity;
+            
+            const height = 0.5 + (intensity * 2);
+            const offset = ball.userData.offset;
 
-        ball.position.x = (ball.userData.baseX || 0) + wobbleX;
-        ball.position.z = (ball.userData.baseZ || 0) + wobbleZ;
+            ball.position.y = Math.abs(Math.sin(offset + (time * speed)) * height);
 
-        const hue = (intensity + (i / balls.length)) % 1;
-        (ball.material as MeshPhongMaterial).color.setHSL(hue, 0.8, 0.5);
+            const wobbleX = Math.cos(time * 0.5 + offset) * (intensity * 2);
+            const wobbleZ = Math.sin(time * 0.5 + offset) * (intensity * 2);
 
-        const scale = 1 + (intensity * 0.5);
-        ball.scale.set(scale, scale, scale);
-    });
+            ball.position.x = (ball.userData.baseX || 0) + wobbleX;
+            ball.position.z = (ball.userData.baseZ || 0) + wobbleZ;
+
+            const hue = (intensity + (i / balls.length)) % 1;
+            (ball.material as MeshPhongMaterial).color.setHSL(hue, 0.8, 0.5);
+
+            const scale = 1 + (intensity * 0.5) + (micIntensity * 2);
+            ball.scale.set(scale, scale, scale);
+        });
+    } else if (micIntensity > 0.1) {
+        // Reactive balls even without music
+        balls.forEach((ball, i) => {
+            const scale = 1 + (micIntensity * 3);
+            ball.scale.lerp(new Vector3(scale, scale, scale), 0.1);
+            ball.position.y = micIntensity * 2;
+        });
+    }
 
     if (particles) {
         const positions = particles.geometry.attributes.position.array as Float32Array;
         const velocities = (particles.geometry.userData as any).velocities;
         const colors = particles.geometry.attributes.color.array as Float32Array;
-        const intensitySum = dataArray.reduce((a: number, b: number) => a + b, 0) / dataArray.length / 255;
+        const intensitySum = (isPlaying && analyser) 
+            ? (dataArray as any).reduce((a: number, b: number) => a + b, 0) / dataArray.length / 255 
+            : micIntensity;
 
         for (let i = 0; i < positions.length / 3; i++) {
-            positions[i * 3] += velocities[i * 3];
-            positions[i * 3 + 1] += velocities[i * 3 + 1];
-            positions[i * 3 + 2] += velocities[i * 3 + 2];
+            const speedMultiplier = 1 + intensitySum * 5;
+            positions[i * 3] += velocities[i * 3] * speedMultiplier;
+            positions[i * 3 + 1] += velocities[i * 3 + 1] * speedMultiplier;
+            positions[i * 3 + 2] += velocities[i * 3 + 2] * speedMultiplier;
 
             if (Math.abs(positions[i * 3]) > 25) positions[i * 3] *= -0.9;
             if (Math.abs(positions[i * 3 + 1]) > 25) positions[i * 3 + 1] *= -0.9;
@@ -426,8 +555,73 @@ function updateVisuals(): void {
     }
 }
 
-// MouseInteractions.ts
+let gazeTimer = 0;
+let gazeTarget: Mesh | null = null;
+const GAZE_TIME = 1000; // 1 second
+
+function updateGaze(frame: XRFrame) {
+    const session = renderer.xr.getSession();
+    if (!session) return;
+
+    const xrCamera = renderer.xr.getCamera();
+    raycaster.set(xrCamera.position, xrCamera.getWorldDirection(new Vector3()));
+
+    const intersects = raycaster.intersectObjects(balls);
+
+    if (intersects.length > 0) {
+        const target = intersects[0].object as Mesh;
+        if (gazeTarget === target) {
+            gazeTimer += timer.getDelta() * 1000;
+            if (gazeTimer >= GAZE_TIME) {
+                onGazeSelect(target);
+                gazeTimer = 0;
+            }
+        } else {
+            gazeTarget = target;
+            gazeTimer = 0;
+        }
+    } else {
+        gazeTarget = null;
+        gazeTimer = 0;
+    }
+}
+
+function onGazeSelect(mesh: Mesh) {
+    new TWEEN.Tween(mesh.scale)
+        .to({ x: 2, y: 2, z: 2 }, 200)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .yoyo(true)
+        .repeat(1)
+        .start();
+
+    mesh.userData.offset += Math.PI * 0.5;
+    (mesh.material as MeshPhongMaterial).emissive.setHex(0xffffff);
+    setTimeout(() => {
+        (mesh.material as MeshPhongMaterial).emissive.setHex(0x000000);
+    }, 200);
+}
+
 const raycaster = new Raycaster();
+let physicsObjects: Mesh[] = [];
+const GRAVITY = -9.8;
+
+function updatePhysics(delta: number) {
+    physicsObjects.forEach(obj => {
+        if (!obj.userData.velocity) obj.userData.velocity = new Vector3();
+        
+        // Gravity
+        obj.userData.velocity.y += GRAVITY * delta;
+        obj.position.addScaledVector(obj.userData.velocity, delta);
+
+        // Ground collision (y=0 for simplicity in AR)
+        if (obj.position.y < 0) {
+            obj.position.y = 0;
+            obj.userData.velocity.y *= -0.5; // Bounce
+            obj.userData.velocity.x *= 0.8; // Friction
+            obj.userData.velocity.z *= 0.8;
+        }
+    });
+}
 const mouse = new Vector2();
 let hoveredBall: Mesh | null = null;
 
@@ -461,7 +655,7 @@ function updateHover(): void {
     if (!camera || !balls.length) return;
 
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(balls);
+    const intersects = raycaster.intersectObjects([...balls, ...spatialButtons]);
 
     if (intersects.length > 0) {
         const currentBall = intersects[0].object as Mesh;
@@ -527,6 +721,9 @@ function setupEventListeners(): void {
 // AudioControls.ts
 function startAudio(): void {
     if (audio) {
+        if (listener && listener.context.state === 'suspended') {
+            listener.context.resume();
+        }
         audio.play();
         isPlaying = true;
         balls.forEach(ball => ball.visible = true);
@@ -578,7 +775,31 @@ export function stopAudio(): void {
 
 
 
-// AudioUI.ts
+let spatialButtons: Mesh[] = [];
+
+function createSpatialUI(): void {
+    const group = new Scene(); // We'll add this to the main scene
+    
+    const panelGeom = new PlaneGeometry(1, 0.5);
+    const panelMat = new MeshPhongMaterial({ color: 0x333333, transparent: true, opacity: 0.8 });
+    const panel = new Mesh(panelGeom, panelMat);
+    panel.position.set(0, 1.5, -1);
+    scene.add(panel);
+
+    const btnGeom = new BoxGeometry(0.3, 0.2, 0.05);
+    
+    const redBtn = new Mesh(btnGeom, new MeshPhongMaterial({ color: 0xff0000 }));
+    redBtn.position.set(-0.25, 1.5, -0.95);
+    redBtn.userData.action = () => balls.forEach(b => (b.material as MeshPhongMaterial).color.set(0xff0000));
+    scene.add(redBtn);
+    spatialButtons.push(redBtn);
+
+    const blueBtn = new Mesh(btnGeom, new MeshPhongMaterial({ color: 0x0000ff }));
+    blueBtn.position.set(0.25, 1.5, -0.95);
+    blueBtn.userData.action = () => balls.forEach(b => (b.material as MeshPhongMaterial).color.set(0x0000ff));
+    scene.add(blueBtn);
+    spatialButtons.push(blueBtn);
+}
 function setupAudioUI(): void {
     const uiContainer = document.createElement('div');
     uiContainer.id = 'extra-ui';
@@ -644,10 +865,21 @@ function setupAudioUI(): void {
         shapeControls.appendChild(btn);
     });
 
+    const micBtn = document.createElement('button');
+    micBtn.textContent = 'Activer Micro (Souffle)';
+    micBtn.style.padding = '5px 10px';
+    micBtn.style.fontSize = '10px';
+    micBtn.addEventListener('click', () => {
+        setupMicrophone();
+        micBtn.disabled = true;
+        micBtn.textContent = 'Micro Actif';
+    });
+
     uiContainer.appendChild(progressBar);
     uiContainer.appendChild(volLabel);
     uiContainer.appendChild(volumeSlider);
     uiContainer.appendChild(shapeControls);
+    uiContainer.appendChild(micBtn);
     document.body.appendChild(uiContainer);
 }
 
@@ -677,17 +909,3 @@ function changeBallsShape(shapeType: string): void {
         ball.geometry = newGeometry;
     });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

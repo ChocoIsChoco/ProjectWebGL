@@ -40,7 +40,7 @@ export default defineConfig({
         glsl(),
         injectIWER({
             device: "metaQuest3",
-            activation: "false",
+            activation: true,
             verbose: true,
             sem: {
                 defaultScene: "living_room"
