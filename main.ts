@@ -156,9 +156,6 @@ function init() {
 }
 
 
-init();
-
-
 
 function initScene(): void {
     scene.add(camera);
@@ -678,6 +675,10 @@ function updateHover(): void {
 
 function setupKeyboardShortcuts(playPauseCallback: () => void): void {
     window.addEventListener('keydown', (event: KeyboardEvent) => {
+        if (event.code === 'Enter') {
+            onSelect({ target: renderer.xr.getController(0) });
+        }
+        
         if (event.code === 'Space') {
             event.preventDefault();
             playPauseCallback();
@@ -693,6 +694,7 @@ function setupKeyboardShortcuts(playPauseCallback: () => void): void {
 
 // EventListeners.ts
 function setupEventListeners(): void {
+    audioFileInput.value = "";
     audioFileInput.addEventListener('change', (e: Event) => {
         const target = e.target as HTMLInputElement;
         const file = target.files?.[0];
@@ -909,3 +911,5 @@ function changeBallsShape(shapeType: string): void {
         ball.geometry = newGeometry;
     });
 }
+
+init();
