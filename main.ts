@@ -78,7 +78,7 @@ let isPlaying = false;
 let balls: Mesh[] = [];
 let progressBar: HTMLInputElement;
 let volumeSlider: HTMLInputElement;
-
+let tmpColor = new Color();
 
 
 let hitTestSource: XRHitTestSource | null = null;
@@ -542,10 +542,10 @@ function updateVisuals(): void {
             if (Math.abs(positions[i * 3 + 2]) > 25) positions[i * 3 + 2] *= -0.9;
 
             const hue = (time * 0.1 + (i / (positions.length / 3))) % 1;
-            const color = new Color().setHSL(hue, 0.8, 0.5 + intensitySum * 0.5);
-            colors[i * 3] = color.r;
-            colors[i * 3 + 1] = color.g;
-            colors[i * 3 + 2] = color.b;
+            tmpColor.setHSL(hue, 0.8, 0.5 + intensitySum * 0.5);
+            colors[i * 3] = tmpColor.r;
+            colors[i * 3 + 1] = tmpColor.g;
+            colors[i * 3 + 2] = tmpColor.b;
         }
         particles.geometry.attributes.position.needsUpdate = true;
         particles.geometry.attributes.color.needsUpdate = true;
