@@ -9,7 +9,7 @@ import {
     WebGLRenderer, AudioListener, PositionalAudio, Points,
     PointsMaterial
 } from 'three';
-import * as TWEEN from '@tweenjs/tween.js';
+import { Tween, Easing, update as updateTween } from '@tweenjs/tween.js';
 import { XRButton } from 'three/addons/webxr/XRButton.js';
 
 interface XRState {
@@ -22,7 +22,7 @@ const GRAVITY = -9.8;
 const GAZE_TIME = 1000;
 const TARGET_COORD = { lat: 48.8584, lon: 2.2945 };
 
-const zzfx = (p=1,k=.05,b=220,e=0,r=0,t=.1,q=0,D=1,u=0,y=0,v=0,z=0,l=0,E=0,A=0,F=0,c=0,w=1,m=0,B=0)=>{let M=Math,R=44100,d=2*M.PI,G=u*=500*d/R/R,C=b*=(1-k+2*k*M.random())*d/R,P=0,g=0,H=0,a=0,n=1,I=0,j=0,f=0,x,h;e=M.max(.001,e);r=M.max(.001,r);t=M.max(.001,t);v=M.max(.001,v);l=M.max(.001,l);A=M.max(.001,A);c=M.max(.001,c);m*=d/R;B*=d/R;let s=R*(e+r+t+v+l+A+c),S=new Float32Array(s|0);for(;a<s;a++){if(++P>R*100)break;if(++g>R*500)break;if(a<R*e)n=a/(R*e);else if(a<R*(e+r))n=1-(a-R*e)/(R*r)*(1-D);else if(a<R*(e+r+t))n=D;else if(a<R*(e+r+t+v))n=D-(a-R*(e+r+t))/(R*v)*D;else n=0;if(a<s)n*=M.exp(-6*M.random()*q);f+=M.cos(m*a+B);h=M.sin(C*a+f);x=h>0?1:-1;C+=G;if(++H>z*R/100){H=0;C+=E*d/R}S[a]=n*(y?y>1?y>2?y>3?M.sin((h%1)*d):1-M.abs((h*2%2)-1)*2:1-M.abs((h*2%2)-1):M.sign(M.sin(h*d)):h)*w*p;if(a>R*e)S[a]+=S[a-R*e|0]*F}const ctx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();const buf = ctx.createBuffer(1,S.length,R);buf.getChannelData(0).set(S);const src = ctx.createBufferSource();src.buffer = buf;src.connect(ctx.destination);src.start();return src};
+const zzfx = (p=1,k=.05,b=220,e=0,r=0,t=.1,q=0,D=1,u=0,y=0,v=0,z=0,l=0,E=0,A=0,F=0,c=0,w=1,m=0,B=0)=>{let M=Math,R=44100,d=2*M.PI,G=u*500*d/R/R,C=b*(1-k+2*k*M.random())*d/R,P=0,g=0,H=0,a=0,n=1,f=0,h;e=M.max(.001,e);r=M.max(.001,r);t=M.max(.001,t);v=M.max(.001,v);l=M.max(.001,l);A=M.max(.001,A);c=M.max(.001,c);m*=d/R;B*=d/R;let s=R*(e+r+t+v+l+A+c),S=new Float32Array(s|0);for(;a<s;a++){if(++P>R*100)break;if(++g>R*500)break;if(a<R*e)n=a/(R*e);else if(a<R*(e+r))n=1-(a-R*e)/(R*r)*(1-D);else if(a<R*(e+r+t))n=D;else if(a<R*(e+r+t+v))n=D-(a-R*(e+r+t))/(R*v)*D;else n=0;if(a<s)n*=M.exp(-6*M.random()*q);f+=M.cos(m*a+B);h=M.sin(C*a+f);C+=G;if(++H>z*R/100){H=0;C+=E*d/R}S[a]=n*(y?y>1?y>2?y>3?M.sin((h%1)*d):1-M.abs((h*2%2)-1)*2:1-M.abs((h*2%2)-1):M.sign(M.sin(h*d)):h)*w*p;if(a>R*e)S[a]+=S[a-R*e|0]*F}const ctx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();const buf = ctx.createBuffer(1,S.length,R);buf.getChannelData(0).set(S);const src = ctx.createBufferSource();src.buffer = buf;src.connect(ctx.destination);src.start();return src};
 
 class App {
     private scene = new Scene();
@@ -74,7 +74,7 @@ class App {
         this.camera.add(this.audioListener);
         this.scene.add(this.camera);
 
-        this.scene.background = new Color(0x111111);
+        this.scene.background = new Color(0x7fbdf1);
 
         const sessionInit = { optionalFeatures: ['local-floor', 'hit-test', 'light-estimation'] };
         document.body.appendChild(XRButton.createButton(this.renderer, sessionInit));
@@ -217,7 +217,7 @@ class App {
             if (session) {
                 for (const inputSource of session.inputSources) {
                     if (inputSource.gamepad?.hapticActuators?.length) {
-                        inputSource.gamepad.hapticActuators[0].pulse(0.5, 100);
+                        void inputSource.gamepad.hapticActuators[0].pulse(0.5, 100);
                     }
                 }
             }
@@ -248,9 +248,9 @@ class App {
     }
 
     private animateObject(mesh: Mesh): void {
-        new TWEEN.Tween(mesh.scale)
+        new Tween(mesh.scale)
             .to({ x: 1.5, y: 1.5, z: 1.5 }, 200)
-            .easing(TWEEN.Easing.Back.Out)
+            .easing(Easing.Back.Out)
             .yoyo(true)
             .repeat(1)
             .start();
@@ -267,6 +267,14 @@ class App {
     }
 
     private setupEventListeners(): void {
+        const info = document.getElementById('info');
+        const audioInput = document.getElementById('audioFile') as HTMLInputElement;
+
+        audioInput?.addEventListener('change', () => {
+            const file = audioInput.files?.[0];
+            if (file && info) info.textContent = `Fichier chargé : ${file.name}`;
+        });
+
         window.addEventListener('resize', () => {
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
@@ -287,13 +295,15 @@ class App {
         });
 
         const startBtn = document.getElementById('startButton');
-        const audioInput = document.getElementById('audioFile') as HTMLInputElement;
-
         startBtn?.addEventListener('click', () => {
             const file = audioInput?.files?.[0];
-            if (file) this.startAudio(file);
+            if (file) {
+                this.startAudio(file);
+                const info = document.getElementById('info');
+                if (info) info.textContent = 'Lecture en cours...';
+            }
             document.getElementById('overlay')?.classList.add('hidden');
-            this.setupMicrophone();
+            void this.setupMicrophone();
             this.initSpeechRecognition();
         });
     }
@@ -315,7 +325,7 @@ class App {
         this.audio.loop = true;
         
         const ctx = this.audioListener.context;
-        if (ctx.state === 'suspended') ctx.resume();
+        if (ctx.state === 'suspended') void ctx.resume();
 
         this.positionalAudio = new PositionalAudio(this.audioListener);
         this.positionalAudio.setMediaElementSource(this.audio);
@@ -328,7 +338,7 @@ class App {
         sourceNode.connect(this.analyser);
         sourceNode.connect(this.positionalAudio.getOutput());
         
-        this.audio.play();
+        void this.audio.play();
     }
 
     private initSpeechRecognition(): void {
@@ -360,7 +370,7 @@ class App {
 
     private render(time: number, frame?: XRFrame): void {
         const delta = 0.016;
-        TWEEN.update(time);
+        updateTween(time);
 
         if (frame) {
             this.updateXR(frame);
@@ -386,7 +396,7 @@ class App {
         if (!session) return;
         
         if (this.audioListener.context.state === 'suspended') {
-            this.audioListener.context.resume();
+            void this.audioListener.context.resume();
         }
 
         this.scene.background = null;
