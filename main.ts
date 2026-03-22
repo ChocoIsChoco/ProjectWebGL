@@ -466,11 +466,9 @@ class App {
         if (frame && (this.renderer.xr as any).getDepthTexture) {
             const depthTexture = (this.renderer.xr as any).getDepthTexture();
             if (depthTexture) {
-                this.scene.traverse((obj) => {
-                    if (obj instanceof Mesh && obj.material) {
-                        (obj.material as any).depthTest = true;
-                        // Note: Dans les versions récentes de Three.js, l'occlusion peut être gérée automatiquement 
-                        // si le support depth-sensing est activé sur le renderer.xr
+                this.scene.traverse((obj: any) => {
+                    if (obj.isMesh && obj.material) {
+                        obj.material.depthTest = true;
                     }
                 });
             }
