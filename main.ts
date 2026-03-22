@@ -1,13 +1,13 @@
 "use strict";
 
 import {
-    AmbientLight, BoxGeometry, BufferAttribute, BufferGeometry,
+    AmbientLight, BoxGeometry,
     Color, ConeGeometry, DirectionalLight,
     Group, Mesh, MeshLambertMaterial, MeshPhongMaterial,
     PerspectiveCamera, PlaneGeometry, Raycaster, RingGeometry, Scene,
     ShadowMaterial, SphereGeometry, Vector2, Vector3,
-    WebGLRenderer, AudioListener, PositionalAudio, Points,
-    PointsMaterial
+    WebGLRenderer, AudioListener, PositionalAudio, InstancedMesh,
+    Matrix4, DynamicDrawUsage
 } from 'three';
 import { Tween, Easing, Group as TweenGroup } from '@tweenjs/tween.js';
 import { XRButton } from 'three/addons/webxr/XRButton.js';
@@ -49,11 +49,13 @@ class App {
     private gaze = { timer: 0, target: null as Mesh | null };
     private heading = 0;
     private compass!: Mesh;
-    private particles!: Points;
+    private instancedParticles!: InstancedMesh;
+    private particleVelocities: Float32Array = new Float32Array(0);
     private terrain!: Mesh;
     private reactiveBalls: Mesh[] = [];
     private sharedBoxGeom = new BoxGeometry(0.1, 0.1, 0.1);
     private sharedBoxMat = new MeshPhongMaterial({ color: 0xffffff });
+    private crosshair!: Mesh;
     
     constructor() {
         this.init();
@@ -147,10 +149,16 @@ class App {
         this.terrain = this.createTerrain();
         this.scene.add(this.terrain);
 
-        this.particles = this.createParticles();
-        this.scene.add(this.particles);
+        this.createParticles();
 
         this.createReactiveBalls();
+
+        this.crosshair = new Mesh(
+            new RingGeometry(0.015, 0.02, 32),
+            new MeshPhongMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })
+        );
+        this.crosshair.position.z = -0.5;
+        this.camera.add(this.crosshair);
 
         this.compass = new Mesh(new ConeGeometry(0.05, 0.2, 4), new MeshPhongMaterial({ color: 0xff3300 }));
         this.compass.rotation.x = Math.PI / 2;
@@ -158,6 +166,17 @@ class App {
         this.camera.add(this.compass);
 
         this.createSpatialUI();
+        this.createInstructions();
+    }
+
+    private createInstructions(): void {
+        const panel = new Mesh(new PlaneGeometry(0.4, 0.15), new MeshPhongMaterial({ color: 0x000000, transparent: true, opacity: 0.6 }));
+        panel.position.set(0, 1.4, -0.8);
+        this.scene.add(panel);
+        
+        const label = new Mesh(new PlaneGeometry(0.35, 0.1), new MeshPhongMaterial({ color: 0x00ffcc }));
+        label.position.set(0, 1.4, -0.79);
+        this.scene.add(label);
     }
 
     private createTerrain(): Mesh {
@@ -175,18 +194,27 @@ class App {
         return mesh;
     }
 
-    private createParticles(): Points {
-        const count = 1000;
-        const geom = new BufferGeometry();
-        const pos = new Float32Array(count * 3);
-        const vel = new Float32Array(count * 3);
-        for (let i = 0; i < count * 3; i++) {
-            pos[i] = (Math.random() - 0.5) * 20;
-            vel[i] = (Math.random() - 0.5) * 0.05;
+    private createParticles(): void {
+        const count = 500;
+        const geom = new SphereGeometry(0.02, 8, 8);
+        const mat = new MeshPhongMaterial({ color: 0x00ffff, transparent: true, opacity: 0.6 });
+        this.instancedParticles = new InstancedMesh(geom, mat, count);
+        this.particleVelocities = new Float32Array(count * 3);
+        
+        const dummy = new Matrix4();
+        for (let i = 0; i < count; i++) {
+            const x = (Math.random() - 0.5) * 10;
+            const y = (Math.random() - 0.5) * 10;
+            const z = (Math.random() - 0.5) * 10;
+            dummy.setPosition(x, y, z);
+            this.instancedParticles.setMatrixAt(i, dummy);
+            
+            this.particleVelocities[i * 3] = (Math.random() - 0.5) * 0.02;
+            this.particleVelocities[i * 3 + 1] = (Math.random() - 0.5) * 0.02;
+            this.particleVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.02;
         }
-        geom.setAttribute('position', new BufferAttribute(pos, 3));
-        (geom.userData as any).velocities = vel;
-        return new Points(geom, new PointsMaterial({ color: 0x00ffff, size: 0.05, transparent: true, opacity: 0.6 }));
+        this.instancedParticles.instanceMatrix.setUsage(DynamicDrawUsage);
+        this.scene.add(this.instancedParticles);
     }
 
     private createReactiveBalls(): void {
@@ -489,15 +517,19 @@ class App {
             b.position.y = (b.userData.originalPos.y) + Math.sin(time * 0.002 + i) * 0.2 + totalIntensity;
         });
 
-        if (this.particles) {
-            const pos = this.particles.geometry.attributes.position.array as Float32Array;
-            const vel = (this.particles.geometry.userData as any).velocities;
-            for (let i = 0; i < pos.length; i++) {
-                pos[i] += vel[i] * (1 + totalIntensity * 10);
-                if (Math.abs(pos[i]) > 10) vel[i] *= -1;
-            }
-            this.particles.geometry.attributes.position.needsUpdate = true;
+        const dummy = new Matrix4();
+        for (let i = 0; i < this.instancedParticles.count; i++) {
+            this.instancedParticles.getMatrixAt(i, dummy);
+            const pos = new Vector3().setFromMatrixPosition(dummy);
+            pos.x += this.particleVelocities[i * 3] * (1 + totalIntensity * 5);
+            pos.y += this.particleVelocities[i * 3 + 1] * (1 + totalIntensity * 5);
+            pos.z += this.particleVelocities[i * 3 + 2] * (1 + totalIntensity * 5);
+            
+            if (pos.length() > 10) pos.setLength(5);
+            dummy.setPosition(pos);
+            this.instancedParticles.setMatrixAt(i, dummy);
         }
+        this.instancedParticles.instanceMatrix.needsUpdate = true;
     }
 
     private updatePhysics(delta: number): void {
@@ -526,6 +558,10 @@ class App {
             const target = intersects[0].object as Mesh;
             if (this.gaze.target === target) {
                 this.gaze.timer += 16;
+                const progress = this.gaze.timer / GAZE_TIME;
+                this.crosshair.scale.set(1 - progress, 1 - progress, 1);
+                (this.crosshair.material as MeshPhongMaterial).color.setHSL(0.3, 1, 0.5 + progress * 0.5);
+
                 if (this.gaze.timer >= GAZE_TIME) {
                     this.animateObject(target);
                     this.gaze.timer = 0;
@@ -538,6 +574,8 @@ class App {
         } else {
             this.gaze.target = null;
             this.gaze.timer = 0;
+            this.crosshair.scale.set(1, 1, 1);
+            (this.crosshair.material as MeshPhongMaterial).color.set(0xffffff);
         }
     }
 }
