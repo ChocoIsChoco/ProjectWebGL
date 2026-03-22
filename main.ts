@@ -441,6 +441,20 @@ class App {
     private updateXR(frame: XRFrame): void {
         const session = this.renderer.xr.getSession();
         if (!session) return;
+
+        // Activation de l'occlusion si disponible
+        if (frame && (this.renderer.xr as any).getDepthTexture) {
+            const depthTexture = (this.renderer.xr as any).getDepthTexture();
+            if (depthTexture) {
+                this.scene.traverse((obj) => {
+                    if (obj instanceof Mesh && obj.material) {
+                        (obj.material as any).depthTest = true;
+                        // Note: Dans les versions récentes de Three.js, l'occlusion peut être gérée automatiquement 
+                        // si le support depth-sensing est activé sur le renderer.xr
+                    }
+                });
+            }
+        }
         
         if (this.audioListener.context.state === 'suspended') {
             void this.audioListener.context.resume();
@@ -581,6 +595,3 @@ class App {
 }
 
 new App();
-
-
-
