@@ -82,7 +82,7 @@ class App {
         this.scene.background = new Color(0x7fbdf1);
 
         const sessionInit = { 
-            optionalFeatures: ['local-floor', 'hit-test', 'light-estimation', 'depth-sensing'],
+            optionalFeatures: ['local-floor', 'hit-test', 'light-estimation', 'depth-sensing', 'hand-tracking'],
             depthSensing: { 
                 usagePreference: ['gpu-optimized'] as any, 
                 dataFormatPreference: ['luminance-alpha'] as any 
@@ -283,12 +283,32 @@ class App {
             }
         };
 
+        const onSqueeze = (event: any) => {
+            const controller = event.target;
+            this.raycaster.set(controller.position, controller.getWorldDirection(new Vector3()).negate());
+            const targets = [...this.reactiveBalls, ...this.physicsObjects];
+            const intersects = this.raycaster.intersectObjects(targets);
+
+            if (intersects.length > 0) {
+                const obj = intersects[0].object as Mesh;
+                new Tween(obj.scale, this.tweenGroup)
+                    .to({ x: 0.8, y: 1.2, z: 0.8 }, 150)
+                    .easing(Easing.Elastic.Out)
+                    .yoyo(true)
+                    .repeat(1)
+                    .start();
+                zzfx(1, .1, 50, .1, .1, .2);
+            }
+        };
+
         const c1 = this.renderer.xr.getController(0);
         c1.addEventListener('select', onSelect);
+        c1.addEventListener('squeeze', onSqueeze);
         this.scene.add(c1);
 
         const c2 = this.renderer.xr.getController(1);
         c2.addEventListener('select', onSelect);
+        c2.addEventListener('squeeze', onSqueeze);
         this.scene.add(c2);
     }
 
