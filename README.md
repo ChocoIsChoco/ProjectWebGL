@@ -21,7 +21,7 @@ Pour récupérer et lancer le projet localement :
    ```
 
 ## Déploiement
-Le projet est automatiquement déployé sur **Render** à partir de la branche **`ar`**.
+Le projet est automatiquement déployé sur **Render** à partir de la branche **`main`**.
 
 ## Lien de test en direct
 **Testez l'application ici : [https://visualiseur-audio.onrender.com](https://visualiseur-audio.onrender.com)**  
