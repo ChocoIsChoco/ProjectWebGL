@@ -462,7 +462,6 @@ class App {
         const session = this.renderer.xr.getSession();
         if (!session) return;
 
-        // Activation de l'occlusion si disponible
         if (frame && (this.renderer.xr as any).getDepthTexture) {
             const depthTexture = (this.renderer.xr as any).getDepthTexture();
             if (depthTexture) {
