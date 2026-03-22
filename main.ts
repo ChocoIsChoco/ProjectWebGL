@@ -52,6 +52,8 @@ class App {
     private particles!: Points;
     private terrain!: Mesh;
     private reactiveBalls: Mesh[] = [];
+    private sharedBoxGeom = new BoxGeometry(0.1, 0.1, 0.1);
+    private sharedBoxMat = new MeshPhongMaterial({ color: 0xffffff });
     
     constructor() {
         this.init();
@@ -272,7 +274,9 @@ class App {
     }
 
     private spawnPhysicsObject(): void {
-        const obj = new Mesh(new BoxGeometry(0.1, 0.1, 0.1), new MeshPhongMaterial({ color: Math.random() * 0xffffff }));
+        const mat = this.sharedBoxMat.clone();
+        mat.color.set(Math.random() * 0xffffff);
+        const obj = new Mesh(this.sharedBoxGeom, mat);
         this.hitReticle.matrix.decompose(obj.position, obj.quaternion, obj.scale);
         obj.position.y += 0.5;
         obj.userData.velocity = new Vector3(0, 2, 0);
