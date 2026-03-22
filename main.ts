@@ -9,7 +9,7 @@ import {
     WebGLRenderer, AudioListener, PositionalAudio, Points,
     PointsMaterial
 } from 'three';
-import { Tween, Easing, update as updateTween } from '@tweenjs/tween.js';
+import { Tween, Easing, Group as TweenGroup } from '@tweenjs/tween.js';
 import { XRButton } from 'three/addons/webxr/XRButton.js';
 
 interface XRState {
@@ -30,6 +30,7 @@ class App {
     private renderer = new WebGLRenderer({ antialias: true, alpha: true });
     private raycaster = new Raycaster();
     private audioListener = new AudioListener();
+    private tweenGroup = new TweenGroup();
     
     private xr: XRState = { hitTestSource: null, hitTestSourceRequested: false, lightProbe: null };
     private hitReticle!: Mesh;
@@ -248,7 +249,7 @@ class App {
     }
 
     private animateObject(mesh: Mesh): void {
-        new Tween(mesh.scale)
+        new Tween(mesh.scale, this.tweenGroup)
             .to({ x: 1.5, y: 1.5, z: 1.5 }, 200)
             .easing(Easing.Back.Out)
             .yoyo(true)
@@ -370,7 +371,7 @@ class App {
 
     private render(time: number, frame?: XRFrame): void {
         const delta = 0.016;
-        updateTween(time);
+        this.tweenGroup.update(time);
 
         if (frame) {
             this.updateXR(frame);
