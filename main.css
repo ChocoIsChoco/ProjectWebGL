@@ -3,6 +3,7 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  background-color: #000;
 }
 
 * {
@@ -24,19 +25,25 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    background: transparent;
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    pointer-events: none;
 }
 
 .controls {
     text-align: center;
     padding: 2rem;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 20px;
     backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+    max-width: 400px;
+    width: 90%;
 }
 
 .controls h1 {
@@ -74,8 +81,12 @@ button:hover {
 }
 
 #container {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
+    z-index: 1;
 }
 
 #info {
@@ -87,6 +98,7 @@ button:hover {
     border-radius: 5px;
     font-size: 14px;
     z-index: 100;
+    color: white;
 }
 
 .hidden {
