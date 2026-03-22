@@ -77,7 +77,10 @@ class App {
 
         this.scene.background = new Color(0x7fbdf1);
 
-        const sessionInit = { optionalFeatures: ['local-floor', 'hit-test', 'light-estimation'] };
+        const sessionInit = { 
+            optionalFeatures: ['local-floor', 'hit-test', 'light-estimation', 'depth-sensing'],
+            depthSensing: { usagePreference: ['gpu-optimized'], dataFormatPreference: ['luminance-alpha'] }
+        };
         document.body.appendChild(XRButton.createButton(this.renderer, sessionInit));
 
         this.setupLights();
@@ -85,8 +88,16 @@ class App {
         this.setupControllers();
         this.setupEventListeners();
         this.initGeolocation();
+        this.animateCameraIntro();
 
         this.renderer.setAnimationLoop((t, f) => this.render(t, f));
+    }
+
+    private animateCameraIntro(): void {
+        new Tween(this.camera.position, this.tweenGroup)
+            .to({ x: 0, y: 1.6, z: 3 }, 3000)
+            .easing(Easing.Quadratic.InOut)
+            .start();
     }
 
     private setupLights(): void {
