@@ -79,7 +79,10 @@ class App {
 
         const sessionInit = { 
             optionalFeatures: ['local-floor', 'hit-test', 'light-estimation', 'depth-sensing'],
-            depthSensing: { usagePreference: ['gpu-optimized'], dataFormatPreference: ['luminance-alpha'] }
+            depthSensing: { 
+                usagePreference: ['gpu-optimized'] as any, 
+                dataFormatPreference: ['luminance-alpha'] as any 
+            }
         };
         document.body.appendChild(XRButton.createButton(this.renderer, sessionInit));
 
